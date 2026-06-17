@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar or Header -->
+        <header class="app-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-database animate-pulse"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>BigQuery</h1>
+                    <span>Release Explorer</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
+                    <span>Refresh Feed</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Overview Section -->
+        <section class="stats-section">
+            <div class="stat-card" data-category="All">
+                <div class="stat-icon bg-all"><i class="fa-solid fa-list"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-total">0</h3>
+                    <p>Total Updates</p>
+                </div>
+            </div>
+            <div class="stat-card" data-category="Feature">
+                <div class="stat-icon bg-feature"><i class="fa-solid fa-star"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-features">0</h3>
+                    <p>Features</p>
+                </div>
+            </div>
+            <div class="stat-card" data-category="Announcement">
+                <div class="stat-icon bg-announcement"><i class="fa-solid fa-bullhorn"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-announcements">0</h3>
+                    <p>Announcements</p>
+                </div>
+            </div>
+            <div class="stat-card" data-category="Change">
+                <div class="stat-icon bg-change"><i class="fa-solid fa-sliders"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-changes">0</h3>
+                    <p>Changes</p>
+                </div>
+            </div>
+            <div class="stat-card" data-category="Breaking">
+                <div class="stat-icon bg-breaking"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-info">
+                    <h3 id="stat-breaking">0</h3>
+                    <p>Breaking</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Control Bar (Filters & Search) -->
+        <section class="control-bar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search updates (e.g. JSON, pricing, SQL)..." autocomplete="off">
+                <button id="clear-search-btn" class="clear-btn" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="filter-group">
+                <span class="filter-label">Filter:</span>
+                <div class="tags-container" id="category-filters">
+                    <button class="filter-tag active" data-category="All">All</button>
+                    <button class="filter-tag" data-category="Feature"><span class="dot bg-feature"></span>Feature</button>
+                    <button class="filter-tag" data-category="Announcement"><span class="dot bg-announcement"></span>Announcement</button>
+                    <button class="filter-tag" data-category="Change"><span class="dot bg-change"></span>Change</button>
+                    <button class="filter-tag" data-category="Breaking"><span class="dot bg-breaking"></span>Breaking</button>
+                    <button class="filter-tag" data-category="Issue"><span class="dot bg-issue"></span>Issue</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feed Info Banner -->
+        <div id="feed-status-banner" class="feed-status-banner" style="display: none;">
+            <span id="feed-status-text">Loaded from cache</span>
+            <span id="feed-timestamp-text">Just now</span>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="feed-container">
+            <!-- Loading Skeleton -->
+            <div id="skeleton-loader" class="skeleton-grid">
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-body"></div>
+                    <div class="skeleton-footer"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-body"></div>
+                    <div class="skeleton-footer"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-body"></div>
+                    <div class="skeleton-footer"></div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="empty-state" style="display: none;">
+                <div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h2>Oops! Something went wrong</h2>
+                <p id="error-message">Could not fetch the release notes. Please check your network connection or try again later.</p>
+                <button id="retry-btn" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i> Retry Fetch</button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h2>No matching updates found</h2>
+                <p>Try refining your search query or choosing a different category filter.</p>
+                <button id="reset-filters-btn" class="btn btn-secondary">Reset Filters</button>
+            </div>
+
+            <!-- Release Notes Grid -->
+            <div id="notes-grid" class="notes-grid"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BigQuery Release Notes Explorer &bull; Built with Flask, Vanilla HTML, JS &amp; CSS</p>
+            <p><a href="https://docs.cloud.google.com/bigquery/docs/release-notes" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Official BigQuery Release Notes</a></p>
+        </footer>
+    </div>
+
+    <!-- Tweet Builder Modal -->
+    <div id="tweet-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-x-twitter"></i> Tweet Composer</h2>
+                <button id="close-modal-btn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Preview Segment -->
+                <div class="section-title">Tweet Preview</div>
+                <div class="tweet-preview-card">
+                    <div class="tweet-user">
+                        <div class="tweet-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="tweet-user-info">
+                            <span class="display-name">You</span>
+                            <span class="username">@gcp_explorer</span>
+                        </div>
+                        <div class="x-logo">
+                            <i class="fa-brands fa-x-twitter"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="tweet-content-preview" id="tweet-textarea" contenteditable="true" spellcheck="false"></div>
+                    
+                    <div class="tweet-preview-footer">
+                        <span class="preview-hint"><i class="fa-solid fa-pen"></i> Feel free to edit the text above</span>
+                    </div>
+                </div>
+
+                <!-- Template Selector -->
+                <div class="section-title">Choose Template Style</div>
+                <div class="template-selector">
+                    <button class="template-tab active" data-style="standard">
+                        <i class="fa-solid fa-quote-left"></i> Standard
+                    </button>
+                    <button class="template-tab" data-style="brief">
+                        <i class="fa-solid fa-compress"></i> Short
+                    </button>
+                    <button class="template-tab" data-style="excited">
+                        <i class="fa-solid fa-bolt"></i> Excited
+                    </button>
+                    <button class="template-tab" data-style="formal">
+                        <i class="fa-solid fa-briefcase"></i> Professional
+                    </button>
+                </div>
+
+                <div class="char-count-row">
+                    <div class="progress-bar-container">
+                        <div id="char-progress" class="progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <span id="char-count" class="char-count">0 / 280</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="copy-tweet-btn" class="btn btn-secondary">
+                    <i class="fa-regular fa-copy"></i> Copy Text
+                </button>
+                <button id="post-tweet-btn" class="btn btn-twitter">
+                    <i class="fa-brands fa-x-twitter"></i> Share on X
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast" style="display: none;">
+        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        <span id="toast-message">Copied to clipboard!</span>
+    </div>
+
+    <!-- App Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
